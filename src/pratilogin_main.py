@@ -2,6 +2,8 @@ import os
 import sys
 import logging
 import time # For main loop delays, etc.
+import argparse
+import configparser
 
 # --- Setup Colorama (should be among the first imports) ---
 try:
@@ -159,6 +161,52 @@ def handle_credential_setup(config):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Fast PratiLogin Application")
+    parser.add_argument(
+        "--clear-credentials",
+        action="store_true",
+        help="Rimuove le credenziali salvate per l'utente configurato ed esce."
+    )
+    args = parser.parse_args()
+
+    # Carica la configurazione per ottenere lo username
+    # Definisci i percorsi effettivi PRIMA di setup_logging o caricare config
+    # Questa logica dovrebbe essere unificata in futuro
+    effective_app_dir = os.path.join(os.getenv('APPDATA'), "Fast_Pratilogin") # Default
+    
+    effective_config_file = os.path.join(effective_app_dir, "config.ini")
+    # Non inizializzare il logging completo se stiamo solo pulendo le credenziali
+    
+    if args.clear_credentials:
+        print(f"{INFO_COLOR}Tentativo di rimozione credenziali...{RESET_COLOR}")
+        try:
+            # Carica config solo per leggere lo username, non serve il setup completo del logging
+            # o la gestione della prima esecuzione qui.
+            temp_config = configparser.ConfigParser()
+            if os.path.exists(effective_config_file):
+                temp_config.read(effective_config_file)
+                username_to_clear = temp_config.get('GeneralSettings', 'Username', fallback=None)
+                
+                if username_to_clear and username_to_clear != DEFAULT_USERNAME_PLACEHOLDER:
+                    # Assicurati che credential_manager sia importato
+                    if credential_manager.delete_credentials(username_to_clear):
+                        print(f"{SUCCESS_COLOR}Credenziali per '{username_to_clear}' rimosse dal portachiavi di sistema.{RESET_COLOR}")
+                    else:
+                        print(f"{WARNING_COLOR}Impossibile rimuovere credenziali per '{username_to_clear}' (potrebbero non esistere o errore).{RESET_COLOR}")
+                elif username_to_clear == DEFAULT_USERNAME_PLACEHOLDER:
+                    print(f"{INFO_COLOR}Nessun username specifico configurato, nessuna credenziale da rimuovere.{RESET_COLOR}")
+                else:
+                    print(f"{WARNING_COLOR}Username non trovato nel file di configurazione.{RESET_COLOR}")
+            else:
+                print(f"{INFO_COLOR}File di configurazione non trovato, nessuna credenziale utente da rimuovere.{RESET_COLOR}")
+        except Exception as e:
+            print(f"{ERROR_COLOR}Errore durante la rimozione delle credenziali: {e}{RESET_COLOR}")
+        finally:
+            sys.exit(0) # Esce dopo aver tentato la pulizia
+
+    system_ops.ensure_app_dir_exists() # Basato su APP_DIR da constants
+    setup_logging() # Basato su LOG_FILE da constants
+
     print_title()
     logging.info("Main function started.")
 
