@@ -1,6 +1,7 @@
 # 🚀 PratiLogin - Accesso Semplificato alla Rete Universitaria
 
 Questa è la nuova versione di PratiLogin, un'applicazione desktop progettata per superare le problematiche di connessione alla rete Praticelli dell'Università di Pisa.
+
 ⚠️ NOTA: Il programma funziona solo all'interno del campus universitario.
 
 ---
