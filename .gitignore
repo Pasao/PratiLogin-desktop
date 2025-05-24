@@ -1,0 +1,22 @@
+# Build artifacts
+*.spec
+build/
+dist/
+.spec
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# VSCode settings (opzionale, solo se vuoi escludere config locali)
+.vscode/
+
+# File di log o temporanei (se ne generi)
+*.log
+*.tmp
+
+# Ambiente virtuale (se ne usi uno)
+venv/
+.env/
