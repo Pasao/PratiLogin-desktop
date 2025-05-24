@@ -1,4 +1,3 @@
-# pratilogin_main.py
 import os
 import sys
 import logging
@@ -24,20 +23,20 @@ except ImportError:
 # but before other modules that might depend on constants.
 try:
     from constants import (
-        APP_DIR, 
-        EXE_PATH, 
-        CONFIG_FILE, 
+        APP_DIR,
+        # EXE_PATH, # Non più usato direttamente qui per logica di spostamento
+        CONFIG_FILE,
         LOG_FILE,
-        DEFAULT_USERNAME_PLACEHOLDER, 
+        DEFAULT_USERNAME_PLACEHOLDER,
         KEYRING_SERVICE_NAME,
 
         # Network status Constants
-        LOGIN_SUCCESSFUL, 
-        REACHABLE_AUTH_FAILED_401, 
+        LOGIN_SUCCESSFUL,
+        REACHABLE_AUTH_FAILED_401,
         REACHABLE_AUTH_OK_NO_INTERNET,
-        REACHABLE_POST_ERROR, 
-        NO_LOCATION_REACHABLE, 
-        ALREADY_CONNECTED, 
+        REACHABLE_POST_ERROR,
+        NO_LOCATION_REACHABLE,
+        ALREADY_CONNECTED,
         MISSING_CREDENTIALS,
 
         # fORCE RECONNECTION CONSTANTS
@@ -48,26 +47,21 @@ except ImportError:
     print(f"{ERROR_COLOR}FATAL: constants.py not found. Exiting.{RESET_COLOR}")
     sys.exit(1)
 
-# --- System Operations (needs to be early for move_executable) ---
+# --- System Operations (needs to be early for ensure_app_dir_exists) ---
 try:
     import system_ops
 except ImportError:
     print(f"{ERROR_COLOR}FATAL: system_ops.py not found. Exiting.{RESET_COLOR}")
     sys.exit(1)
 
-# --- Initial system setup: Ensure app directory and attempt self-move if needed ---
-# This should happen before logging is fully configured to APP_DIR if it doesn't exist
+# --- Ensure AppData directory exists early ---
+# This is needed before logging to file or loading config from APP_DIR.
 system_ops.ensure_app_dir_exists()
-if system_ops.is_windows() and hasattr(sys, 'frozen'): # Only for compiled Windows apps
-    if not system_ops.is_running_from_appdata():
-        print(f"{INFO_COLOR}Prima esecuzione o eseguibile in posizione non standard.{RESET_COLOR}")
-        system_ops.move_executable_and_restart() # This will exit if it moves and restarts
 
 # --- Setup Logging ---
 def setup_logging():
     log_level = logging.INFO # Or logging.DEBUG for more verbosity
-    # Make sure APP_DIR exists before setting up log file there
-    system_ops.ensure_app_dir_exists()
+    # APP_DIR existence is already ensured before this function is called.
     logging.basicConfig(
         filename=LOG_FILE,
         level=log_level,
@@ -110,7 +104,6 @@ def print_help():
     print(f"{SUCCESS_COLOR}f{RESET_COLOR}:          Forza un nuovo tentativo di login")
     print(f"{SUCCESS_COLOR}l{RESET_COLOR}:          Cambia le credenziali UNIPI salvate")
     print(f"{SUCCESS_COLOR}o{RESET_COLOR}:          Apri la cartella dei file dell'applicazione")
-    print(f"{SUCCESS_COLOR}d{RESET_COLOR}:          Disinstalla PratiLogin")
     print(f"{SUCCESS_COLOR}h{RESET_COLOR}:          Mostra questo aiuto")
     print(f"{SUCCESS_COLOR}c / q{RESET_COLOR}:      Chiudi il programma")
     print(f"{INFO_COLOR}============================{RESET_COLOR}\n")
@@ -186,7 +179,7 @@ def main():
         logging.critical("No locations found in config. Exiting.")
         input("Premi invio per uscire.")
         sys.exit(1)
-    
+
     # Order locations: try last connected one first
     ordered_locations = {}
     last_loc = config_manager.get_last_location(config)
@@ -195,7 +188,7 @@ def main():
     for loc, url in locations_map.items():
         if loc != last_loc:
             ordered_locations[loc] = url
-    
+
     if is_first_run_logic:
         print(f"\n{INFO_COLOR}Primo avvio: Tento la connessione automaticamente...{RESET_COLOR}")
         status, loc_name = network_ops.try_login(
@@ -213,7 +206,7 @@ def main():
     while True:
         if not skip_next_auto_login:
             print(f"\n{INFO_COLOR}Verifica connessione / Tentativo di login... (Premi 'h' per aiuto){RESET_COLOR}")
-            
+
             current_last_loc_name = config_manager.get_last_location(config)
             loc_to_try_first = None
             # Build current_ordered_locations with current_last_loc_name first
@@ -224,7 +217,7 @@ def main():
             for l_key, l_url in locations_map.items():
                 if l_key != current_last_loc_name:
                     current_ordered_locations[l_key] = l_url
-            
+
             # Normal attempt - tries ordered_locations, specific_location_to_try is None initially
             status, loc_name = network_ops.try_login(
                 current_ordered_locations, username, password,
@@ -233,7 +226,7 @@ def main():
 
             if loc_name: # A location was at least targeted and GET attempted
                 config_manager.update_last_location(config, loc_name)
-            
+
             if status == LOGIN_SUCCESSFUL:
                 pass # Message already printed
             elif status == ALREADY_CONNECTED:
@@ -248,7 +241,7 @@ def main():
 
         skip_next_auto_login = False
 
-        print(f"\n{INFO_COLOR}Azioni: [R]iprova/Stato, [F]orza login, [L]ogin cambia, [O]pen folder, [D]isinstalla, [H]elp, [C]hiudi{RESET_COLOR}")
+        print(f"\n{INFO_COLOR}Azioni: [R]iprova/Stato, [F]orza login, [L]ogin cambia, [O]pen folder, [H]elp, [C]hiudi{RESET_COLOR}")
         user_input = input("Scegli un'opzione: ").lower().strip()
 
         if user_input in ['c', 'q', 'chiudi']:
@@ -257,14 +250,14 @@ def main():
         elif user_input in ['l', 'login']:
             print(f"\n{INFO_COLOR}--- Cambio Credenziali ---{RESET_COLOR}")
             old_username = config_manager.get_username_from_config(config)
-            
+
             new_username_input, new_password_input = credential_manager.prompt_for_credentials()
 
             if new_username_input and new_password_input:
                 # Delete old credentials if username changed or if it's good practice
                 if old_username and old_username != DEFAULT_USERNAME_PLACEHOLDER and old_username != new_username_input:
                     credential_manager.delete_credentials(old_username) # Delete for old user
-                
+
                 if credential_manager.save_credentials(new_username_input, new_password_input):
                     username = new_username_input # Update active username
                     password = new_password_input # Update active password
@@ -285,20 +278,20 @@ def main():
         elif user_input == 'f':
             print(f"\n{INFO_COLOR}--- Modalità Login Forzato ---{RESET_COLOR}") # Changed title for clarity
             force_location_target = config_manager.get_last_location(config)
-            
+
             if not force_location_target or force_location_target not in locations_map:
                 print(f"{INFO_COLOR}Nessuna ultima location valida, cerco una sede raggiungibile...{RESET_COLOR}")
                 # When finding an initial target, iterate all locations
                 status_find, found_loc = network_ops.try_login(
-                    locations_map, username, password, 
-                    SUCCESS_COLOR, ERROR_COLOR, WARNING_COLOR, RESET_COLOR, 
+                    locations_map, username, password,
+                    SUCCESS_COLOR, ERROR_COLOR, WARNING_COLOR, RESET_COLOR,
                     force=True, specific_location_to_try=None # Iterate all
                 )
-                if found_loc: 
+                if found_loc:
                     config_manager.update_last_location(config, found_loc) # Save if found
                     force_location_target = found_loc # This is now our target
                 # If status_find is NO_LOCATION_REACHABLE or found_loc is None, error printed below
-            
+
             if not force_location_target: # Check again after trying to find one
                  print(f"{ERROR_COLOR}Impossibile determinare una sede per forzare il login.{RESET_COLOR}")
                  skip_next_auto_login = True
@@ -310,11 +303,11 @@ def main():
             while retries < MAX_FORCE_RETRIES:
                 retries += 1
                 print(f"{INFO_COLOR}Tentativo forzato {retries}/{MAX_FORCE_RETRIES} su '{force_location_target}'...{RESET_COLOR}")
-                
+
                 # In the force loop, ALWAYS try the specific force_location_target
                 # The try_login function itself handles if this target becomes unreachable
                 current_status, current_loc_name = network_ops.try_login( # <-- GET TUPLE HERE
-                    locations_map, username, password, 
+                    locations_map, username, password,
                     SUCCESS_COLOR, ERROR_COLOR, WARNING_COLOR, RESET_COLOR,
                     force=True, specific_location_to_try=force_location_target
                 )
@@ -322,11 +315,11 @@ def main():
                 # current_loc_name from try_login will be force_location_target if it was attempted,
                 # or None if something went wrong before even trying (e.g. MISSING_CREDENTIALS)
                 # or if specific_location_to_try was not in locations_map (shouldn't happen here)
-                if current_loc_name: 
+                if current_loc_name:
                     config_manager.update_last_location(config, current_loc_name)
                     # It's possible try_login iterated if specific_location_to_try was initially bad,
                     # so update force_location_target to what was actually last attempted.
-                    force_location_target = current_loc_name 
+                    force_location_target = current_loc_name
 
 
                 if current_status == LOGIN_SUCCESSFUL:
@@ -336,21 +329,21 @@ def main():
                 elif current_status == NO_LOCATION_REACHABLE:
                     # This means the specific_location_to_try (force_location_target) became unreachable
                     print(f"{ERROR_COLOR}'{force_location_target}' non è più raggiungibile. Interrompo i tentativi forzati.{RESET_COLOR}")
-                    break 
+                    break
                 elif current_status in [REACHABLE_AUTH_FAILED_401, REACHABLE_AUTH_OK_NO_INTERNET, REACHABLE_POST_ERROR]:
                     if retries < MAX_FORCE_RETRIES:
                         print(f"{WARNING_COLOR}Login su '{force_location_target}' non completato (stato: {current_status}). Riprovo tra {FORCE_RETRY_DELAY} sec...{RESET_COLOR}")
                         time.sleep(FORCE_RETRY_DELAY)
                     else:
                         print(f"{ERROR_COLOR}Numero massimo di tentativi forzati raggiunto per '{force_location_target}'. Login fallito.{RESET_COLOR}")
-                elif current_status == ALREADY_CONNECTED: 
+                elif current_status == ALREADY_CONNECTED:
                     print(f"{SUCCESS_COLOR}Risulta già connesso durante il tentativo forzato.{RESET_COLOR}")
                     force_success = True
                     break
                 else: # MISSING_CREDENTIALS or other unexpected
                     print(f"{ERROR_COLOR}Errore ({current_status}) durante il login forzato. Interrompo.{RESET_COLOR}")
                     break
-            
+
             if not force_success:
                 print(f"{ERROR_COLOR}Modalità login forzato terminata senza successo.{RESET_COLOR}")
             skip_next_auto_login = True
@@ -366,23 +359,10 @@ def main():
             system_ops.open_app_data_folder()
             skip_next_auto_login = True
 
-        elif user_input == 'd':
-            print(f"\n{WARNING_COLOR}ATTENZIONE: Stai per disinstallare PratiLogin.{RESET_COLOR}")
-            confirm = input("Sei sicuro? (s/N): ").lower()
-            if confirm == 's':
-                username_for_uninstall = config_manager.get_username_from_config(config)
-                system_ops.uninstall_application(
-                    username_for_uninstall,
-                    credential_manager.delete_credentials
-                )
-                # uninstall_application calls sys.exit()
-            else:
-                print("Disinstallazione annullata.")
-                skip_next_auto_login = True
         else:
             print(f"{WARNING_COLOR}Comando non riconosciuto. Premi 'h' per aiuto.{RESET_COLOR}")
             skip_next_auto_login = True
-        
+
         time.sleep(0.1) # Small delay
 
     print(f"\n{INFO_COLOR}PratiLogin terminato. Arrivederci!{RESET_COLOR}")
