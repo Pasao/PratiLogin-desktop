@@ -121,3 +121,12 @@ L'installer (`setup.exe`) è progettato per Windows.
 * [ ] Implementare un Installer per macOS e Linux
 * [ ] Documentazione Avanzata per sviluppatori e utenti esperti
 * [ ] Miglioramenti UI/UX (interfaccia CLI e possibile GUI futura)
+
+## ⚠️ Disclaimer
+
+Questo script automatizza la procedura di login alla rete Praticelli tramite richieste HTTP osservabili normalmente durante la navigazione.  
+Le informazioni sono state ottenute analizzando il traffico del proprio browser durante l’autenticazione, senza violare la privacy di terzi né bypassare misure di sicurezza.
+Sono stati usati strumenti come BurpSuite e Wireshark per comprendere come fossero eseguite le richieste.
+
+Il codice è pensato per l’uso personale da parte di studenti con accesso autorizzato alla rete.  
+Non incoraggia né abilita comportamenti illeciti.
