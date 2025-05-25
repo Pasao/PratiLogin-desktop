@@ -89,7 +89,7 @@ def store_username_in_config(config: configparser.ConfigParser, username: str):
         config['GeneralSettings'] = {}
     config['GeneralSettings']['Username'] = username
     save_config(config)
-    logging.info(f"Username '{username}' stored in config.")
+    logging.info(f"Username stored in config.")
 
 def mark_first_run_completed(config: configparser.ConfigParser):
     """Marks that the first run setup has been completed."""

@@ -311,7 +311,7 @@ def main():
                     password = new_password_input # Update active password
                     config_manager.store_username_in_config(config, username)
                     print(f"{SUCCESS_COLOR}Credenziali aggiornate per {username}.{RESET_COLOR}")
-                    logging.info(f"Credentials updated for user {username}.")
+                    logging.info(f"Credentials updated for user.")
                     print("Riprovo la connessione con le nuove credenziali...")
                     skip_next_auto_login = False # Force a login attempt
                 else:

@@ -98,7 +98,7 @@ def try_login(locations: Dict[str, str], username: str, password: str,
     auth_data = {"override": False, "snwl": True}
 
     print(f"\n{color_success}===== Tentativo di Connessione ====={color_reset}")
-    logging.info(f"Starting login. User: {username}. Forced: {force}. Specific location: {specific_location_to_try}")
+    logging.info(f"Starting login for user. Forced: {force}. Specific location: {specific_location_to_try}")
 
     locations_to_iterate = locations
     if specific_location_to_try and specific_location_to_try in locations:
@@ -161,7 +161,7 @@ def try_login(locations: Dict[str, str], username: str, password: str,
                 print(f"{color_warning}    1. Credenziali effettivamente errate.{color_reset}")
                 print(f"{color_warning}    2. Sessione precedente attiva/bloccata sul server Praticelli.{color_reset}")
                 print(f"{color_warning}  Se le credenziali sono corrette, prova a forzare il login ('f') o attendi.{color_reset}")
-                logging.warning(f"Login failed at {location_name} for user {username}: 401 Unauthorized.")
+                logging.warning(f"Login failed at {location_name} for user: 401 Unauthorized.")
                 return REACHABLE_AUTH_FAILED_401, location_name # Crucially, return this status and location
             
             else: # Other non-200, non-401 POST errors

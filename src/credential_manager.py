@@ -8,7 +8,7 @@ def save_credentials(username: str, password: str) -> bool:
     """Saves credentials to the OS keyring."""
     try:
         keyring.set_password(KEYRING_SERVICE_NAME, username, password)
-        logging.info(f"Credentials saved for user: {username}")
+        logging.info(f"Credentials saved for user")
         return True
     except keyring.errors.NoKeyringError:
         logging.error("No keyring backend found. Cannot save credentials securely.")
@@ -16,7 +16,7 @@ def save_credentials(username: str, password: str) -> bool:
         print(f"{Fore.YELLOW}Considera di installare un backend come 'keyrings.alt'.{Style.RESET_ALL}")
         return False
     except Exception as e:
-        logging.error(f"Failed to save credentials for {username}: {e}")
+        logging.error(f"Failed to save credentials for user: {e}")
         return False
 
 def load_password(username: str) -> str | None:
